@@ -1,3 +1,6 @@
+import numpy as np
+from lr4_utils import sort_graph
+
 n = 6
 graph = {}
 graph[1] = [2, 4]
@@ -6,50 +9,45 @@ graph[3] = [6]
 graph[4] = [5]
 graph[5] = [3, 6]
 graph[6] = []
+graph_values = {(1, 2): 1, (1, 4): 2,
+                (2, 3): 4, (2, 4): 3,
+                (3, 6): 1,
+                (4, 5): 1,
+                (5, 3): 4, (5, 6): 2}
 # n = 4
 # graph = {}
 # graph[1] = [4]
 # graph[2] = []
 # graph[3] = [2]
 # graph[4] = [2, 3]
-graph_copy = graph.copy()
 
-states = []
-UNWATCHED = "unwatched"
-WATCHED = "watched"
-USED = "used"
-for _ in range(n):
-    states.append(UNWATCHED)
 
-pos = 1
-ans = []
-prev = []
-while len(ans) != n:
-    if pos == None:
-        pos = prev.pop()
-    vertexes = graph[pos]
-    if len(vertexes) == 0:
-        states[pos-1] = USED
-        ans.append(pos)
-        pos = None
-    else:
-        next_pos = None
-        while len(vertexes) != 0:
-           local_pos = vertexes[0]
-           vertexes.remove(local_pos)
-           if states[local_pos-1] != USED:
-               next_pos = local_pos
-               break
-        if next_pos != None:
-            states[pos-1] = WATCHED
-            prev.append(pos)
-            pos = next_pos
-        else:
-            states[pos-1] = USED
-            ans.append(pos)
-            pos = None
+sorted_graph = sort_graph(graph, n)
 
-print(ans)
+graph_in = {}
+for i in range(n):
+    graph_in[i+1] = []
+for i in range(n):
+    values = graph[i+1]
+    for v in values:
+        graph_in[v].append(i+1)
+print(graph_in)
+
+range = {}
+for v in graph_in:
+    value = 0
+    possible_values = []
+    for prev_v in graph_in[v]:
+        print(range[prev_v])
+        range_val = range[prev_v] if range[prev_v] is None else - np.inf
+        possible_values.append(range_val + graph_values[(prev_v, v)])
+    if len(possible_values) != 0:
+       value = max(possible_values)
+       print(value)
+    range[v] = value
+print(range)
+
+
 
 
 
