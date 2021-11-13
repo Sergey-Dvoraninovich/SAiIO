@@ -65,8 +65,8 @@ def make_right_node(node, x, pos, n):
     local_node.A_ub = np.vstack([local_node.A_ub, A_ub_line])
 
     b = x[pos]
-    b *= -1
     b = math.ceil(b)
+    b *= -1
     b = np.array([b])
     local_node.b_ub = np.vstack([local_node.b_ub, b])
 
@@ -99,20 +99,25 @@ nodes = collections.deque()
 nodes.append(LP_node)
 
 while len(nodes) != 0:
-    current_node = nodes.popleft()
+    current_node = nodes.pop()
     result = current_node.solve()
-    x = result.x
-    fun = result.fun
-    fun *= -1
-    pos = not_int_pos()
-    if pos == n:
-        if fun < r:
-            ans_x = x
-            r = fun
-    else:
-        if fun < r:
-            nodes.append(make_left_node(current_node, x, pos, n))
-            nodes.append(make_right_node(current_node, x, pos, n))
+    if True:
+        x = result.x
+        fun = result.fun
+        fun *= -1
+        pos = not_int_pos(x)
+        if pos == n:
+            if fun > r:
+                ans_x = x
+                r = fun
+        else:
+            if fun > r:
+               nodes.append(make_left_node(current_node, x, pos, n))
+               nodes.append(make_right_node(current_node, x, pos, n))
+        print(x)
+        print(ans_x)
+        print(r)
+        print()
 
 print("Result:")
 if is_valid_ans(ans_x):

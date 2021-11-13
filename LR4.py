@@ -1,19 +1,15 @@
 import numpy as np
 from lr4_utils import sort_graph
 
-n = 6
+n = 4
 graph = {}
-graph[1] = [2, 4]
+graph[1] = [2, 3]
 graph[2] = [3, 4]
-graph[3] = [6]
-graph[4] = [5]
-graph[5] = [3, 6]
-graph[6] = []
-graph_values = {(1, 2): 1, (1, 4): 2,
-                (2, 3): 4, (2, 4): 3,
-                (3, 6): 1,
-                (4, 5): 5,
-                (5, 3): 4, (5, 6): 2}
+graph[3] = [4]
+graph[4] = []
+graph_values = {(1, 2): 0, (1, 3): 0,
+                (2, 3): 1, (2, 4): 0,
+                (3, 4): 0}
 # n = 4
 # graph = {}
 # graph[1] = [4]
