@@ -65,12 +65,12 @@ def solve(peaks_dict, graph, flow_graph, B, not_B):
 
     while (True):
         deltas_dict = solve_linear_system(graph, B, not_B)
-        deltas = sorted(deltas_dict.keys())
+        positive_deltas = list(filter(lambda value: value > 0, deltas_dict.keys()))
 
-        if deltas[-1] <= 0:
+        if len(positive_deltas):
             return B, flow_graph
 
-        new_edge = (6, 1)#deltas_dict[deltas[0]]
+        new_edge = deltas_dict[positive_deltas[0]]
         print(new_edge)
         not_B.remove(new_edge)
         B.append(new_edge)
@@ -79,17 +79,41 @@ def solve(peaks_dict, graph, flow_graph, B, not_B):
 
         cycle = process_cycle(cycle_search_graph, new_edge)
 
+        print(cycle)
+
+        positive_edges = [new_edge]
         negative_edges = []
         for i in range(1, len(cycle)):
             edge_from = cycle[i - 1]
             edge_to = cycle[i]
-            local_edge = (edge_from, edge_to)
-            print(local_edge)
-            if graph.get(local_edge, None) is None:
-                negative_edges.append(local_edge)
+            if graph.get((edge_from, edge_to), None) is None:
+                negative_edges.append((edge_to, edge_from))
+            else:
+                positive_edges.append((edge_from, edge_to))
 
         print(negative_edges)
-        break
+        print(positive_edges)
+
+        theta_candidates = [(edge, flow_graph[edge]) for edge in negative_edges]
+        theta_candidates.sort(key=lambda item: item[1])
+
+        theta = theta_candidates[0][1]
+        edge_to_remove = theta_candidates[0][0]
+
+        print(flow_graph)
+        for edge in positive_edges:
+            flow_graph[edge] += theta
+        for edge in negative_edges:
+            flow_graph[edge] -= theta
+
+        #removing old edge from serch graph and B (appending to not_B)
+        cycle_search_graph.remove_edge(edge_to_remove[0], edge_to_remove[1])
+        cycle_search_graph.remove_edge(edge_to_remove[1], edge_to_remove[0])
+        B.remove(edge_to_remove)
+        not_B.append(edge_to_remove)
+
+        print(B)
+        print(flow_graph)
 
 
 
@@ -119,8 +143,6 @@ B_val = [1, 3, 9, 1, 5]
 flow_graph = {}
 for edge in graph.keys():
     flow_graph[edge] = 0
-
-flow_graph = {}
 for i in range(len(B)):
     flow_graph[B[i]] = B_val[i]
 
@@ -129,4 +151,10 @@ for edge in B:
     not_B.pop(edge)
 not_B = list(not_B.keys())
 
-solve(peaks_dict, graph, flow_graph, B, not_B)
+B, flow_graph = solve(peaks_dict, graph, flow_graph, B, not_B)
+
+print("Result basis:")
+print("   {}".format(B))
+print("Basis flow:")
+for edge in flow_graph.keys():
+    print("{}-{} {}".format(edge[0], edge[1], flow_graph[edge]))
