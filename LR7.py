@@ -6,12 +6,11 @@ import copy
 # and finishes in the start edge point
 def process_cycle(cycle_search_graph, edge):
     cycle = []
-    #print('----------------')
+
     for local_cycle in nx.simple_cycles(cycle_search_graph):
         if (len(local_cycle)) != 2:
             cycle = local_cycle
-            #print(local_cycle)
-    #print('----------------')
+
     while not ((cycle[0] == edge[0] and cycle[-1] == edge[1])\
           or (cycle[0] == edge[1] and cycle[-1] == edge[0])):
         cycle.append(cycle[0])
@@ -19,6 +18,26 @@ def process_cycle(cycle_search_graph, edge):
     if cycle[0] == edge[0] and cycle[-1] == edge[1]:
         cycle = cycle[::-1]
     return cycle
+
+def check_criteria(peaks_dict, graph_flow):
+    result = True
+    for peak in peaks_dict.keys():
+        edges_in = list(filter(lambda edge: edge[1] == peak, graph_flow.keys()))
+        in_sum = 0
+        for edge in edges_in:
+            in_sum += graph_flow[edge]
+        edges_out = list(filter(lambda edge: edge[0] == peak, graph_flow.keys()))
+        out_sum = 0
+        for edge in edges_out:
+            out_sum += graph_flow[edge]
+
+        peak_value = peaks_dict[peak]
+        local_result = in_sum + peak_value == out_sum
+        result &= local_result
+    return result
+
+
+
 
 def get_B_peaks(B):
     dict = {}
@@ -65,21 +84,18 @@ def solve(peaks_dict, graph, flow_graph, B, not_B):
 
     while (True):
         deltas_dict = solve_linear_system(graph, B, not_B)
-        positive_deltas = list(filter(lambda value: value > 0, deltas_dict.keys()))
+        positive_deltas = list(filter(lambda value: value >= 0, deltas_dict.keys()))
 
-        if len(positive_deltas):
+        if not len(positive_deltas):
             return B, flow_graph
 
         new_edge = deltas_dict[positive_deltas[0]]
-        print(new_edge)
         not_B.remove(new_edge)
         B.append(new_edge)
         cycle_search_graph.add_edge(new_edge[0], new_edge[1])
         cycle_search_graph.add_edge(new_edge[1], new_edge[0])
 
         cycle = process_cycle(cycle_search_graph, new_edge)
-
-        print(cycle)
 
         positive_edges = [new_edge]
         negative_edges = []
@@ -91,16 +107,12 @@ def solve(peaks_dict, graph, flow_graph, B, not_B):
             else:
                 positive_edges.append((edge_from, edge_to))
 
-        print(negative_edges)
-        print(positive_edges)
-
         theta_candidates = [(edge, flow_graph[edge]) for edge in negative_edges]
         theta_candidates.sort(key=lambda item: item[1])
 
         theta = theta_candidates[0][1]
         edge_to_remove = theta_candidates[0][0]
 
-        print(flow_graph)
         for edge in positive_edges:
             flow_graph[edge] += theta
         for edge in negative_edges:
@@ -111,10 +123,6 @@ def solve(peaks_dict, graph, flow_graph, B, not_B):
         cycle_search_graph.remove_edge(edge_to_remove[1], edge_to_remove[0])
         B.remove(edge_to_remove)
         not_B.append(edge_to_remove)
-
-        print(B)
-        print(flow_graph)
-
 
 
 graph = {}
@@ -152,9 +160,18 @@ for edge in B:
 not_B = list(not_B.keys())
 
 B, flow_graph = solve(peaks_dict, graph, flow_graph, B, not_B)
+flow_cost = 0
+for edge in B:
+    flow_cost += flow_graph[edge] * graph[edge]
 
 print("Result basis:")
 print("   {}".format(B))
 print("Basis flow:")
 for edge in flow_graph.keys():
-    print("{}-{} {}".format(edge[0], edge[1], flow_graph[edge]))
+    print("   {}-{} {}".format(edge[0], edge[1], flow_graph[edge]))
+print("Result cost:")
+print("   {}".format(flow_cost))
+
+result_check = check_criteria(peaks_dict, flow_graph)
+print("Validity check:")
+print("   {}".format(result_check))
